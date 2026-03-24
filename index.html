@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>給食費差額 かんたん計算</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --accent: #3b82f6;
+    --accent-light: #eff6ff;
+    --yellow: #fef9c3;
+    --yellow-border: #fde047;
+    --text: #1e293b;
+    --muted: #64748b;
+    --result-bg: #f0fdf4;
+    --result-border: #86efac;
+    --result-text: #15803d;
+  }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+
+  .container {
+    max-width: 540px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  header h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  header p {
+    margin-top: 6px;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  .badge {
+    display: inline-block;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 99px;
+    margin-bottom: 10px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+
+  .card-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  .field {
+    margin-bottom: 18px;
+  }
+
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  input[type="number"] {
+    width: 100px;
+    padding: 10px 14px;
+    border: 2px solid var(--yellow-border);
+    border-radius: 10px;
+    background: var(--yellow);
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  input[type="number"]:focus {
+    border-color: var(--accent);
+  }
+
+  .unit {
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+
+  .hint {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Result */
+  .result-card {
+    background: var(--result-bg);
+    border: 2px solid var(--result-border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+
+  .result-card .card-title::before { background: var(--result-text); }
+  .result-card .card-title { color: var(--result-text); }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed #bbf7d0;
+    font-size: 0.9rem;
+  }
+
+  .result-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .result-row:first-child { padding-top: 0; }
+
+  .result-label { color: #166534; }
+
+  .result-value {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #15803d;
+  }
+
+  .result-value.big {
+    font-size: 1.5rem;
+  }
+
+  .result-value.highlight {
+    color: var(--accent);
+  }
+
+  .note {
+    font-size: 0.78rem;
+    color: var(--muted);
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+  }
+
+  /* Stepper buttons */
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 2px solid var(--yellow-border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--yellow);
+  }
+
+  .stepper button {
+    width: 36px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--muted);
+    transition: background 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stepper button:hover { background: rgba(0,0,0,0.07); }
+
+  .stepper input[type="number"] {
+    width: 60px;
+    border: none;
+    border-left: 1px solid var(--yellow-border);
+    border-right: 1px solid var(--yellow-border);
+    border-radius: 0;
+    text-align: center;
+    padding: 10px 4px;
+    background: var(--yellow);
+  }
+
+  .stepper input[type="number"]:focus { border-color: var(--yellow-border); }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+    margin: 4px 0 16px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="badge">あお組以上 ２号認定</div>
+    <h1>給食費差額<br>かんたん計算ツール</h1>
+    <p>黄色いセルに数値を入れると自動で目安額が表示されます</p>
+  </header>
+
+  <!-- 入力 -->
+  <div class="card">
+    <div class="card-title">入力項目</div>
+
+    <div class="field">
+      <label>ひと月あたりの土曜登園</label>
+      <div class="input-row">
+        <div class="stepper">
+          <button onclick="step('sat', -1)">−</button>
+          <input type="number" id="sat" value="0" min="0" max="5" oninput="calc()">
+          <button onclick="step('sat', 1)">＋</button>
+        </div>
+        <span class="unit">回 / 月</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>ひと月あたりの平日休み</label>
+      <div class="input-row">
+        <div class="stepper">
+          <button onclick="step('vac', -1)">−</button>
+          <input type="number" id="vac" value="3" min="0" max="20" oninput="calc()">
+          <button onclick="step('vac', 1)">＋</button>
+        </div>
+        <span class="unit">回 / 月</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field">
+      <label>あお組以上の兄弟姉妹</label>
+      <div class="input-row">
+        <div class="stepper">
+          <button onclick="step('sib', -1)">−</button>
+          <input type="number" id="sib" value="1" min="0" max="5" oninput="calc()">
+          <button onclick="step('sib', 1)">＋</button>
+        </div>
+        <span class="unit">人</span>
+      </div>
+      <div class="hint">※ 兄弟姉妹がいない場合は 0 を入力してください</div>
+    </div>
+  </div>
+
+  <!-- 結果 -->
+  <div class="result-card">
+    <div class="card-title">計算結果（目安）</div>
+
+    <div class="result-row">
+      <span class="result-label">基本給食費（２号）</span>
+      <span class="result-value" id="r-base">—</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">新２号給食費（月）</span>
+      <span class="result-value" id="r-new">—</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">給食費差額（月）</span>
+      <span class="result-value" id="r-diff-m">—</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">年間差額目安（1人）</span>
+      <span class="result-value big" id="r-diff-y">—</span>
+    </div>
+
+    <div id="sib-section">
+      <div class="result-row" style="margin-top:12px; padding-top:12px; border-top:1px solid #bbf7d0;">
+        <span class="result-label">兄弟姉妹込み差額（月）</span>
+        <span class="result-value highlight" id="r-sib-m">—</span>
+      </div>
+      <div class="result-row">
+        <span class="result-label">兄弟姉妹込み年間差額</span>
+        <span class="result-value big highlight" id="r-sib-y">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    ※ 単価は <strong>261円／食</strong> で計算しています。<br>
+    ※ 土曜登園は月20回の平日に加算されます。<br>
+    ※ 実際の金額は園や状況によって異なります。
+  </div>
+</div>
+
+<script>
+  const PRICE = 261;
+
+  function step(id, delta) {
+    const el = document.getElementById(id);
+    const v = parseInt(el.value) || 0;
+    const next = Math.max(parseInt(el.min), Math.min(parseInt(el.max), v + delta));
+    el.value = next;
+    calc();
+  }
+
+  function fmt(n) {
+    return '¥' + Math.abs(n).toLocaleString('ja-JP') + '円';
+  }
+
+  function calc() {
+    const sat = parseInt(document.getElementById('sat').value) || 0;
+    const vac = parseInt(document.getElementById('vac').value) || 0;
+    const sib = parseInt(document.getElementById('sib').value) || 0;
+
+    const base = PRICE * 25;                          // 基本給食費
+    const newFee = PRICE * 20 + PRICE * sat;          // 新2号給食費（土曜加算前）
+    const newFeeAdj = newFee - vac * PRICE;            // 平日休み控除後
+    const diffM = base - newFeeAdj;                   // 月差額
+    const diffY = diffM * 12;                          // 年間差額
+    const sibDiffM = diffM + diffM * sib;             // 兄弟姉妹込み月差額
+    const sibDiffY = sibDiffM * 12;                   // 兄弟姉妹込み年間差額
+
+    document.getElementById('r-base').textContent = fmt(base);
+    document.getElementById('r-new').textContent  = fmt(newFeeAdj);
+    document.getElementById('r-diff-m').textContent = fmt(diffM);
+    document.getElementById('r-diff-y').textContent = fmt(diffY);
+
+    const sibSec = document.getElementById('sib-section');
+    if (sib > 0) {
+      sibSec.style.display = '';
+      document.getElementById('r-sib-m').textContent = fmt(sibDiffM);
+      document.getElementById('r-sib-y').textContent = fmt(sibDiffY);
+    } else {
+      sibSec.style.display = 'none';
+    }
+  }
+
+  calc(); // 初期計算
+</script>
+</body>
+</html>
